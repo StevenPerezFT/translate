@@ -1,11 +1,28 @@
+import { useEffect } from "react"
 import { LanguageSelector } from "./components/languageSelector"
 import { TextArea } from "./components/text-area"
 import { AUTO_LANGUAGE } from "./utils/constants.ts/languages"
 import { Section } from "./utils/enums/section"
+import { useDebounce } from "./utils/hooks/debounce"
 import { translateReducer } from "./utils/hooks/useHooks"
+import { translateText } from "./services/translate"
 
 function App() {
   const { loading, toLanguage, fromLanguage, fromText, result, setFromText, setResult, interchangeLanguages, setFromLanguage, setToLanguage } = translateReducer()
+  const debouncedText = useDebounce(fromText, 300)
+
+  useEffect(() => {
+    if (debouncedText === '') return
+    translateText({ fromLanguage, toLanguage, text: debouncedText })
+      .then(result => {
+        if (result == null) return
+        setResult(result)
+      })
+      .catch(() => {
+        setResult("Error")
+      })
+  }, [debouncedText, fromLanguage, toLanguage])
+
 
   return (
     <main className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -18,7 +35,6 @@ function App() {
               value={fromLanguage}
               onChange={setFromLanguage} />
           </div>
-
           <div className="flex">
             <button
               disabled={fromLanguage === AUTO_LANGUAGE}
@@ -39,7 +55,6 @@ function App() {
               onChange={setToLanguage} />
           </div>
         </section>
-
         <section className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-5">
 
           <TextArea
